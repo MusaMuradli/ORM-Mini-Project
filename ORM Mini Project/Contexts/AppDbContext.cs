@@ -20,9 +20,9 @@ public class AppDbContext:DbContext
         modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
         modelBuilder.ApplyConfiguration(new PaymentConfiguration());
     }
-    public DbSet<Product> Products { get; set; }
-    public DbSet<User> Users { get; set; }
-    public DbSet<Order> Orders { get; set; }
-    public DbSet<OrderDetail> OrderDetails { get; set; }
-    public DbSet<Payment> Payments { get; set; }
+    public DbSet<Product> Products { get; set; } = null!;
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Order> Orders { get; set; } = null!;
+    public DbSet<OrderDetail> OrderDetails { get; set; } = null!;
+    public DbSet<Payment> Payments { get; set; } = null!;
 }

@@ -4,7 +4,7 @@ using ORM_Mini_Project.Models;
 
 namespace ORM_Mini_Project.Configurations
 {
-    public class ProductConfiguration : IEntityTypeConfiguration<Product>
+    public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
         public void Configure(EntityTypeBuilder<Product> builder)
         {

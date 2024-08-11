@@ -5,7 +5,7 @@ using System.Runtime.ConstrainedExecution;
 
 namespace ORM_Mini_Project.Configurations
 {
-    public class UserConfiguration : IEntityTypeConfiguration<User>
+    public sealed class UserConfiguration : IEntityTypeConfiguration<User>
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
