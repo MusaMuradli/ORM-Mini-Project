@@ -1,7 +1,7 @@
 ﻿
 namespace ORM_Mini_Project.Models;
 
-public class Product
+public class Product:BaseEntity
 {
     public string Name { get; set; } = null!;
     public decimal Price { get; set; } 

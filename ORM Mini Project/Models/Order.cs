@@ -8,5 +8,10 @@ public class Order : BaseEntity
     public DateTime OrderDate { get; set; } 
     public decimal TotalAmount { get; set; } 
     public OrderStatus Status { get; set; }
-
+    public enum OrderStatus
+    {
+        Pending,
+        Completed,
+        Canceled
+    }
 }
