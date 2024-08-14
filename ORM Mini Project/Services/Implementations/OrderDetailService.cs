@@ -10,10 +10,12 @@ namespace ORM_Mini_Project.Services.Implementations
     public class OrderDetailServiceL : IOrderDetailService
     {
         private readonly AppDbContext _context;
+       
         public OrderDetailServiceL()
         {
             _context = new AppDbContext();
         }
+       
         public async Task AddOrderDetailAsync(OrderDetailDto orderDetailDto)
         {
             if (orderDetailDto.Quantity <= 0 || orderDetailDto.PricePerItem < 0)

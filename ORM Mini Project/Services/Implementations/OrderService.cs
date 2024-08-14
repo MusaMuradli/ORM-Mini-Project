@@ -10,6 +10,11 @@ namespace ORM_Mini_Project.Services.Implementations
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
+
+        public OrderService()
+        {
+        }
+
         public OrderService(AppDbContext context)
         {
             _context = context;

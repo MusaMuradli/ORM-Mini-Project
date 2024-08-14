@@ -10,9 +10,13 @@ namespace ORM_Mini_Project.Services.Implementations
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
-        public UserService()
+        public UserService(AppDbContext dbContext)
         {
             _context = new AppDbContext();
+        }
+
+        public UserService()
+        {
         }
 
         public async Task RegisterUserAsync(RegisterUserDto registerUserDto)
@@ -78,6 +82,11 @@ namespace ORM_Mini_Project.Services.Implementations
             user.Password = HashPassword(updateUserDto.Password);
             user.Address = updateUserDto.Address;
             await _context.SaveChangesAsync();
+        }
+
+        internal Task GetUserByEmailAsync(string email)
+        {
+            throw new NotImplementedException();
         }
     }
 }

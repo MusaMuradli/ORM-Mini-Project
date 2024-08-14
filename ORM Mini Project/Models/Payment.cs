@@ -2,9 +2,10 @@
 
 public class Payment:BaseEntity
 {
-    public int OrderId { get; set; } //Ödəniş edilən sifarişin ID-si
-    public decimal Amount { get; set; } // Ödəniş məbləği
-    public DateTime PaymentDate { get; set; } // Ödəniş tarixi
+    public int OrderId { get; set; }
+    public decimal Amount { get; set; } 
+    public DateTime PaymentDate { get; set; }
+    public Order Order { get; set; }
 
 
 }
