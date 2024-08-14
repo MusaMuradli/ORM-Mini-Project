@@ -1,12 +1,13 @@
-﻿using ORM_Mini_Project.Models;
+﻿using ORM_Mini_Project.DTOs.UserDTOs;
+using ORM_Mini_Project.Models;
 
 namespace ORM_Mini_Project.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<List<User>> GetAllUsersAsync();
-    Task<List<User>> GetUsersAsync();
-    Task CreateUserAsync (User user);
-    Task DeleteUserAsync(int id);
-    Task UpdateUserAsync (int id, User user);
+    Task RegisterUserAsync(RegisterUserDto registerUserDto);
+    Task<User> LoginUserAsync(LoginUserDto loginUserDto);
+    Task UpdateUserAsync(UpdateUserDto updateUserDto);
+    Task<List<Order>> GetUserOrders(int id);
+
 }

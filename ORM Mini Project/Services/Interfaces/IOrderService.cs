@@ -1,11 +1,13 @@
-﻿using ORM_Mini_Project.Models;
+﻿using ORM_Mini_Project.DTOs.OrderDTOs;
+using ORM_Mini_Project.Models;
 
 namespace ORM_Mini_Project.Services.Interfaces;
 
 public  interface IOrderService
 {
-    Task CreateOrderAsync(Order order);
-    Task<Order> GetOrderByIdAsync(int userId);
-    Task UpdateOrderAsync(Order order);
-    Task RemoveOrderAsync(int userId);
+    Task CreateOrderAsync(OrderDto orderDto);
+    Task UpdateOrderAsync(int orderId, OrderDto orderDto);
+    Task DeleteOrderAsync(int orderId);
+    Task<OrderDto> GetOrderByIdAsync(int orderId);
+    Task<List<OrderDto>> GetOrdersAsync();
 }
