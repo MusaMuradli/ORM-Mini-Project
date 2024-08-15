@@ -92,7 +92,7 @@ namespace ORM_Mini_Project.Services.Implementations
                 throw new NotFoundException($"Bu {id} id-li mehsul tapilmadi");
 
             ProductGetDTO dto = new()
-            {
+            {Id=product.Id,
                  Name= product.Name,
                  Price= product.Price,
                  Description= product.Description,
@@ -119,24 +119,29 @@ namespace ORM_Mini_Project.Services.Implementations
         }
         public async Task<List<ProductGetDTO>> GetProductByNameAsync(string name)
         {
+            var products = await _context.Products
+                .Where(x => x.Name.Contains(name.ToLower()))
+                .ToListAsync();
 
-            var products = await _context.Products.Where(x => x.Name.Contains(name.ToLower())).ToListAsync();
-
-            List<ProductGetDTO> dtos=new List<ProductGetDTO>();
+            List<ProductGetDTO> dtos = new List<ProductGetDTO>();
 
             foreach (var product in products)
             {
-                ProductGetDTO dto = new()
+                ProductGetDTO dto = new ProductGetDTO
                 {
-                    
+                    Id = product.Id,
+                    Name = product.Name,
+                    Price = product.Price,
+                    Stock = product.Stock,
+                    Description = product.Description
                 };
 
                 dtos.Add(dto);
             }
 
             return dtos;
-
         }
+
 
     }
 }

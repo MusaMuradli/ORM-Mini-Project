@@ -13,6 +13,6 @@ public class Order : BaseEntity
     {
         Pending,
         Completed,
-        Canceled
+        Cancelled
     }
 }

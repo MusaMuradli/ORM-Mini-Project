@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ORM_Mini_Project.Contexts;
 using ORM_Mini_Project.DTOs.OrderDTOs;
+using ORM_Mini_Project.Enums;
 using ORM_Mini_Project.Exceptions;
 using ORM_Mini_Project.Models;
 using ORM_Mini_Project.Services.Interfaces;
+
 
 namespace ORM_Mini_Project.Services.Implementations
 {
@@ -19,6 +21,46 @@ namespace ORM_Mini_Project.Services.Implementations
         {
             _context = context;
         }
+
+        public async Task CancelOrderAsync(int orderId)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                throw new NotFoundException("Order not found!");
+            }
+
+            if (order.Status == Order.OrderStatus.Cancelled)
+            {
+                throw new OrderAlreadyCancelledException("Order has already been cancelled!");
+            }
+
+            order.Status = (Order.OrderStatus)OrderStatus.Cancelled;
+            
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task CompleteOrderAsync(int orderId)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                throw new NotFoundException("Order not found!");
+            }
+
+            if (order.Status == Order.OrderStatus.Cancelled)
+            {
+                throw new OrderAlreadyCancelledException("Order has already been completed!");
+            }
+
+            order.Status = (Order.OrderStatus)OrderStatus.Completed;
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task CreateOrderAsync(OrderDto orderDto)
         {
             if (orderDto.TotalAmount < 0)
@@ -76,16 +118,8 @@ namespace ORM_Mini_Project.Services.Implementations
             }).ToList();
         }
 
-        public async Task UpdateOrderAsync(int orderId, OrderDto orderDto)
-        {
-            var order = await _context.Orders.FindAsync(orderId);
-            if (order==null)
-                throw new NotFoundException("Order not found.");
-            order.UserId= orderId;
-            order.OrderDate= orderDto.OrderDate;
-            order.TotalAmount= orderDto.TotalAmount;
-            order.Status = (Order.OrderStatus)orderDto.Status;
-            await _context.SaveChangesAsync();
-        }
+        
+
+
     }
 }

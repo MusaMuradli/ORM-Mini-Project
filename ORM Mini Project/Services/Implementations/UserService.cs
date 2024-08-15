@@ -10,14 +10,12 @@ namespace ORM_Mini_Project.Services.Implementations
     public class UserService : IUserService
     {
         private readonly AppDbContext _context;
-        public UserService(AppDbContext dbContext)
+        public UserService()
         {
             _context = new AppDbContext();
         }
 
-        public UserService()
-        {
-        }
+       
 
         public async Task RegisterUserAsync(RegisterUserDto registerUserDto)
         {
