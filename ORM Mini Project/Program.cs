@@ -1,10 +1,13 @@
-﻿using ORM_Mini_Project.DTOs.OrderDTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using ORM_Mini_Project.Contexts;
+using ORM_Mini_Project.DTOs.OrderDTOs;
 using ORM_Mini_Project.DTOs.ProductDTOs;
 using ORM_Mini_Project.DTOs.UserDTOs;
 using ORM_Mini_Project.Enums;
 using ORM_Mini_Project.Exceptions;
 using ORM_Mini_Project.Models;
 using ORM_Mini_Project.Services.Implementations;
+using System.Xml;
 
 UserService userService = new UserService();
 OrderService orderService = new OrderService();
@@ -168,14 +171,14 @@ static async Task ShowServiceMenu(OrderService orderService, ProductService prod
         switch (serviceCommand)
         {
             case "1":
-                await ManageOrders(orderService);
+                await ManageOrders(orderService, productService);
                 break;
             case "2":
                 await ManageProducts(productService);
                 Console.WriteLine("Mehsullar servisi.");
                 break;
             case "3":
-              
+                await ManagePayments(paymentService);
                 Console.WriteLine("Ödenişler servisi.");
                 break;
             case "4":
@@ -191,7 +194,7 @@ static async Task ShowServiceMenu(OrderService orderService, ProductService prod
     }
 }
 
-static async Task ManageOrders(OrderService orderService)
+static async Task ManageOrders(OrderService orderService,ProductService productService)
 {
     while (true)
     {
@@ -208,7 +211,7 @@ static async Task ManageOrders(OrderService orderService)
         switch (orderCommand)
         {
             case "1":
-                await CreateOrder(orderService);
+                await CreateOrder(orderService, productService);
                 break;
             case "2":
                 await ListOrders(orderService);
@@ -230,7 +233,7 @@ static async Task ManageOrders(OrderService orderService)
         }
     }
 
-    static async Task CreateOrder(OrderService orderService)
+    static async Task CreateOrder(OrderService orderService, ProductService productService)
     {
         try
         {
@@ -238,41 +241,68 @@ static async Task ManageOrders(OrderService orderService)
             Console.Write("İstifadeçi ID-sini daxil edin: ");
             int userId = int.Parse(Console.ReadLine());
 
-            Console.Write("Sifariş tarixi daxil edin (yyyy-mm-dd): ");
-            DateTime orderDate = DateTime.Parse(Console.ReadLine());
+            var products = await productService.GetAllProductAsync();
+            Console.WriteLine("Mövcud Mehsullar:");
+            foreach (var product in products)
+            {
+                Console.WriteLine($"ID: {product.Id}, Ad: {product.Name}, Qiymet: {product.Price}, Stok: {product.Stock}");
+            }
 
-            Console.Write("Mebleği daxil edin: ");
-            decimal totalAmount = decimal.Parse(Console.ReadLine());
+            Console.Write("Mehsul ID-sini seçin: ");
+            int productId = int.Parse(Console.ReadLine());
 
-            var orderDto = new OrderDto
+            var selectedProduct = products.FirstOrDefault(p => p.Id == productId);
+            if (selectedProduct == null)
+            {
+                throw new NotFoundException("Seçilen mehsul tapılmadı.");
+            }
+
+            Console.Write("Miqdarı daxil edin: ");
+            int quantity = int.Parse(Console.ReadLine());
+
+            if (quantity > selectedProduct.Stock)
+            {
+                throw new InvalidOrderException("Stokda kifayet qeder mehsul yoxdur.");
+            }
+
+            var order = new Order
             {
                 UserId = userId,
-                OrderDate = orderDate,
-                TotalAmount = totalAmount,
-                Status = OrderStatus.Pending
+                Id = productId,
+                TotalAmount = quantity,
+                OrderDate = DateTime.UtcNow
             };
 
-            await orderService.CreateOrderAsync(orderDto);
+            await orderService.CreateOrderAsync(userId);
+
+            selectedProduct.Stock -= quantity;
+            await productService.UpdateProductAsync(selectedProduct);
+
             Console.WriteLine("Sifariş uğurla yaradıldı.");
         }
         catch (InvalidOrderException ex)
         {
             Console.WriteLine($"Sifariş yaratmaq uğursuz oldu: {ex.Message}");
         }
+        catch (NotFoundException ex)
+        {
+            Console.WriteLine($"Xeta: {ex.Message}");
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Xeta baş verdi: {ex.Message}");
         }
     }
+
     static async Task ListOrders(OrderService orderService)
     {
         try
         {
-            var orders = await orderService.GetOrdersAsync();
+            var orders = await orderService.GetOrders();
             Console.WriteLine("Sifarişler:");
             foreach (var order in orders)
             {
-                Console.WriteLine($"Sifariş ID: {order.UserId}, Mebleğ: {order.TotalAmount}, Status: {order.Status}");
+                Console.WriteLine($"İstifadeçi ID: {order.UserId}, Mebleğ: {order.TotalAmount}, Status: {order.Status}");
             }
         }
         catch (Exception ex)
@@ -280,6 +310,7 @@ static async Task ManageOrders(OrderService orderService)
             Console.WriteLine($"Sifarişleri siyahıya almaq mümkün olmadı: {ex.Message}");
         }
     }
+
     static async Task DeleteOrder(OrderService orderService)
     {
         try
@@ -564,6 +595,95 @@ static async Task ManageProducts(ProductService productService)
         catch (NotFoundException ex)
         {
             Console.WriteLine(ex.Message);
+        }
+    }
+
+}
+static async Task ManagePayments(PaymentService paymentService)
+{
+    while (true)
+    {
+        Console.WriteLine("Ödenişler Menyusu:");
+        Console.WriteLine("1. Ödeniş et");
+        Console.WriteLine("2. Bütün ödenişleri siyahıya al");
+        Console.WriteLine("3. Geri qayıt");
+
+        string paymentCommand = Console.ReadLine();
+
+        switch (paymentCommand)
+        {
+            case "1":
+                await MakePayment(paymentService);
+                break;
+            case "2":
+                await ListPayments(paymentService);
+                break;
+            case "3":
+                return; 
+            default:
+                Console.WriteLine("Yanlış seçim, yeniden cehd edin.");
+                break;
+        }
+    }
+
+    static async Task MakePayment(PaymentService paymentService)
+    {
+        AppDbContext _context = new AppDbContext();
+        try
+        {
+            Console.WriteLine("Ödeniş etmek üçün melumatları daxil edin:");
+            Console.Write("Sifariş ID-sini daxil edin: ");
+            int orderId = int.Parse(Console.ReadLine());
+
+            Console.Write("Ödeniş mebleğini daxil edin: ");
+            decimal amount = decimal.Parse(Console.ReadLine());
+
+            foreach (var item in _context.Products )
+            {
+                if (item.Id==orderId)
+                {
+                    Console.WriteLine(true);
+                }
+            }
+
+            var payment = new Payment
+            {
+                OrderId = orderId,
+                Amount = amount,
+                PaymentDate = DateTime.UtcNow
+            };
+
+            await paymentService.MakePayment(payment);
+            Console.WriteLine("Ödeniş uğurla edildi.");
+        }
+        catch (InvalidPaymentException ex)
+        {
+            Console.WriteLine($"Ödeniş etmek uğursuz oldu: {ex.Message}");
+        }
+        catch (NotFoundException ex)
+        {
+            Console.WriteLine($"Xeta: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Xeta baş verdi: {ex.Message}");
+        }
+    }
+
+    static async Task ListPayments(PaymentService paymentService)
+    {
+        try
+        {
+            var payments = await paymentService.GetAllPayment();
+            Console.WriteLine("Bütün Ödenişler:");
+            foreach (var payment in payments)
+            {
+                Console.WriteLine($"Sifariş ID: {payment.OrderId}, Mebleğ: {payment.Amount}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ödenişleri siyahıya almaq mümkün olmadı: {ex.Message}");
         }
     }
 

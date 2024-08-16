@@ -61,23 +61,39 @@ namespace ORM_Mini_Project.Services.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task CreateOrderAsync(OrderDto orderDto)
+        public async Task<int> CreateOrderAsync(int userId)
         {
-            if (orderDto.TotalAmount < 0)
-                throw new InvalidOrderException("Order amount cannot be negative.");
-            var user = await _context.Users.FindAsync(orderDto.UserId);
-            if (user == null)
-                throw new NotFoundException("User not found.");
-            var order = new Order
+             var context = new AppDbContext();
+
+            Order order = new()
             {
-                UserId = orderDto.UserId,
-                OrderDate = orderDto.OrderDate,
-                TotalAmount = orderDto.TotalAmount,
+                OrderDate = DateTime.UtcNow,
+                TotalAmount = 0,
+                UserId = userId,
                 Status = Order.OrderStatus.Pending
             };
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            context.Orders.Add(order);
+            await context.SaveChangesAsync();
+
+            return order.Id;
+        }
+
+        public async Task CreateOrderAsync(OrderDto orderDto)
+        {
+
+            var context = new AppDbContext();
+
+            Order order = new()
+            {
+                OrderDate = DateTime.UtcNow,
+                TotalAmount = 0,
+                UserId = orderDto.UserId,
+                Status = Order.OrderStatus.Pending
+            };
+
+            context.Orders.Add(order);
+            await context.SaveChangesAsync();
 
         }
 
@@ -106,20 +122,26 @@ namespace ORM_Mini_Project.Services.Implementations
             };
         }
 
-        public async Task<List<OrderDto>> GetOrdersAsync()
+        public async Task<List<OrderDto>> GetOrders()
         {
             var orders = await _context.Orders.ToListAsync();
-            return orders.Select(order => new OrderDto
+            List<OrderDto> ordersList = new List<OrderDto>();
+
+            foreach (var order in orders)
             {
-                UserId = order.UserId,
-                OrderDate = order.OrderDate,
-                TotalAmount = order.TotalAmount,
-                Status = (Enums.OrderStatus)order.Status
-            }).ToList();
+                OrderDto dto = new()
+                {
+                    UserId = order.UserId,
+                    OrderDate = order.OrderDate,
+                    TotalAmount = order.TotalAmount,
+                    Status = (ORM_Mini_Project.Enums.OrderStatus)order.Status
+                };
+
+                ordersList.Add(dto);
+            }
+
+            return ordersList;
         }
-
-        
-
 
     }
 }

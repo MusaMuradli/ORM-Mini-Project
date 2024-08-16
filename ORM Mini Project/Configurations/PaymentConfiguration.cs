@@ -8,7 +8,6 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 {
     public void Configure(EntityTypeBuilder<Payment> builder)
     {
-        builder.HasOne<Order>().WithMany().HasForeignKey(p => p.OrderId);
         builder.Property(p => p.Amount).HasColumnType("decimal(18,2)");
         builder.Property(p => p.PaymentDate).HasDefaultValueSql("GETDATE()");
     }

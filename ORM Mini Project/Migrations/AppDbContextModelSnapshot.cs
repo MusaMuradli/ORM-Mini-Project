@@ -46,14 +46,9 @@ namespace ORM_Mini_Project.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId1")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("Orders");
                 });
@@ -105,9 +100,6 @@ namespace ORM_Mini_Project.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("OrderId1")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("PaymentDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -116,8 +108,6 @@ namespace ORM_Mini_Project.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("OrderId1");
 
                     b.ToTable("Payments");
                 });
@@ -204,18 +194,10 @@ namespace ORM_Mini_Project.Migrations
             modelBuilder.Entity("ORM_Mini_Project.Models.Order", b =>
                 {
                     b.HasOne("ORM_Mini_Project.Models.User", null)
-                        .WithMany()
+                        .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("ORM_Mini_Project.Models.User", "User")
-                        .WithMany("Orders")
-                        .HasForeignKey("UserId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ORM_Mini_Project.Models.OrderDetail", b =>
@@ -235,15 +217,9 @@ namespace ORM_Mini_Project.Migrations
 
             modelBuilder.Entity("ORM_Mini_Project.Models.Payment", b =>
                 {
-                    b.HasOne("ORM_Mini_Project.Models.Order", null)
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ORM_Mini_Project.Models.Order", "Order")
                         .WithMany()
-                        .HasForeignKey("OrderId1")
+                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

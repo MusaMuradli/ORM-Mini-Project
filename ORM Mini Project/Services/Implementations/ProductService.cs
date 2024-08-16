@@ -142,6 +142,21 @@ namespace ORM_Mini_Project.Services.Implementations
             return dtos;
         }
 
+        internal async Task UpdateProductAsync(ProductGetDTO selectedProduct)
+        {
+            var product = await _context.Products.FirstOrDefaultAsync(x => x.Id == selectedProduct.Id);
+            if (product == null)
+            {
+                throw new NotFoundException($"ID-si {selectedProduct.Id} olan mehsul tapılmadı.");
+            }
+            product.Name = selectedProduct.Name;
+            product.Price = selectedProduct.Price;
+            product.Stock = selectedProduct.Stock;
+            product.Description = selectedProduct.Description;
+            product.UpdatedDate = DateTime.UtcNow;
 
+            await _context.SaveChangesAsync();
+
+        }
     }
 }
