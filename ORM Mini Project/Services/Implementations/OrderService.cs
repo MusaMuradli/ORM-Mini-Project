@@ -15,11 +15,7 @@ namespace ORM_Mini_Project.Services.Implementations
 
         public OrderService()
         {
-        }
-
-        public OrderService(AppDbContext context)
-        {
-            _context = context;
+            _context = new AppDbContext();
         }
 
         public async Task CancelOrderAsync(int orderId)
@@ -37,7 +33,7 @@ namespace ORM_Mini_Project.Services.Implementations
             }
 
             order.Status = (Order.OrderStatus)OrderStatus.Cancelled;
-            
+
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
         }
@@ -61,46 +57,47 @@ namespace ORM_Mini_Project.Services.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task<int> CreateOrderAsync(int userId)
-        {
-             var context = new AppDbContext();
-
-            Order order = new()
-            {
-                OrderDate = DateTime.UtcNow,
-                TotalAmount = 0,
-                UserId = userId,
-                Status = Order.OrderStatus.Pending
-            };
-
-            context.Orders.Add(order);
-            await context.SaveChangesAsync();
-
-            return order.Id;
-        }
 
         public async Task CreateOrderAsync(OrderDto orderDto)
         {
 
             var context = new AppDbContext();
 
+            var product = await context.Products.FirstOrDefaultAsync(x => x.Id == orderDto.ProductId);
+
+            if (product is null)
+                throw new NotFoundException("Product is not found");
+
             Order order = new()
             {
                 OrderDate = DateTime.UtcNow,
-                TotalAmount = 0,
+                TotalAmount = product.Price * orderDto.Quantity,
                 UserId = orderDto.UserId,
                 Status = Order.OrderStatus.Pending
             };
 
-            context.Orders.Add(order);
+
+            OrderDetail orderDetail = new()
+            {
+                Order=order,
+                PricePerItem = product.Price,
+                Quantity = orderDto.Quantity,
+                ProductId = product.Id
+            };
+
+
+            order.OrderDetails.Add(orderDetail);
+            
+
+            await context.Orders.AddAsync(order);
             await context.SaveChangesAsync();
 
         }
 
         public async Task DeleteOrderAsync(int orderId)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(o=>o.Id==orderId);
-            if (order==null)
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+            if (order == null)
                 throw new NotFoundException("Order not found.");
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
@@ -110,7 +107,7 @@ namespace ORM_Mini_Project.Services.Implementations
 
         public async Task<OrderDto> GetOrderByIdAsync(int orderId)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(o=>o.Id==orderId);
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
             if (order == null)
                 throw new NotFoundException("Order not found.");
             return new OrderDto
@@ -125,7 +122,8 @@ namespace ORM_Mini_Project.Services.Implementations
         public async Task<List<OrderDto>> GetOrders()
         {
             var orders = await _context.Orders.ToListAsync();
-            List<OrderDto> ordersList = new List<OrderDto>();
+
+            List<OrderDto> ordersList = new();
 
             foreach (var order in orders)
             {

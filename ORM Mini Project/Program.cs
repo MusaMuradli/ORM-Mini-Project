@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ORM_Mini_Project.Contexts;
+using ORM_Mini_Project.DTOs.OrderDetailDTOs;
 using ORM_Mini_Project.DTOs.OrderDTOs;
 using ORM_Mini_Project.DTOs.ProductDTOs;
 using ORM_Mini_Project.DTOs.UserDTOs;
@@ -7,13 +8,15 @@ using ORM_Mini_Project.Enums;
 using ORM_Mini_Project.Exceptions;
 using ORM_Mini_Project.Models;
 using ORM_Mini_Project.Services.Implementations;
+using ORM_Mini_Project.Services.Interfaces;
 using System.Xml;
+
 
 UserService userService = new UserService();
 OrderService orderService = new OrderService();
 ProductService productService = new ProductService();
 PaymentService paymentService = new PaymentService();
-OrderDetailServiceL OrderDetailServiceL = new OrderDetailServiceL();
+OrderDetailService OrderDetailServiceL = new OrderDetailService();
 
 User? loggedInUser = null;
 
@@ -23,7 +26,7 @@ while (true)
     Console.WriteLine("1. Qeydiyyat");
     Console.WriteLine("2. Daxil ol");
     Console.WriteLine("3. Servisler");
-    Console.WriteLine("4. Çıxış");
+    Console.WriteLine("4. cıxış");
     string command = Console.ReadLine();
 
     try
@@ -32,73 +35,141 @@ while (true)
         {
             case "1":
                 await RegisterUser(userService);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("İstifadeci qeydiyyatı uğurlu oldu.");
+                Console.ResetColor();
                 break;
             case "2":
                 loggedInUser = await LoginUser(userService);
+                if (loggedInUser != null)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Daxilolma uğurlu oldu.");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Daxilolma uğursuz oldu.");
+                    Console.ResetColor();
+                }
                 break;
             case "3":
                 if (loggedInUser == null)
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("evvelce daxil olun.");
+                    Console.ResetColor();
+
                     loggedInUser = await LoginUser(userService);
+
+                
                     if (loggedInUser == null)
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Daxil olma uğursuz oldu, esas menyuya qaytarılır.");
-                        break;  
+                        Console.ResetColor();
+                        break;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Daxilolma uğurlu oldu.");
+                        Console.ResetColor();
                     }
                 }
 
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Servislere giriş uğurludur.");
-                await ShowServiceMenu(orderService, productService, paymentService, OrderDetailServiceL);
+                Console.ResetColor();
+
+                await ShowServiceMenu(orderService, productService, paymentService, OrderDetailServiceL,loggedInUser);
                 break;
             case "4":
                 return;
             default:
-                Console.WriteLine("Yanlış seçim, yeniden cehd edin.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Yanlış secim, yeniden cehd edin.");
+                Console.ResetColor();
                 break;
         }
     }
     catch (Exception ex)
     {
+        Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"Xeta baş verdi: {ex.Message}");
+        Console.ResetColor();
     }
+
 }
 
 static async Task RegisterUser(UserService userService)
 {
     try
     {
-        Console.WriteLine("Yeni istifadeçi qeydiyyatdan keçirin:");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("Yeni istifadeci qeydiyyatdan kecirin:");
+        Console.ResetColor();
+
+    FirstName:
         Console.Write("Tam ad daxil edin: ");
         var fullName = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(fullName) || fullName.Length < 3)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Tam ad en azı 3 simvoldan ibaret olmalıdır.");
-            return;
+            Console.ResetColor();
+            goto FirstName;
         }
 
-        Console.Write("E-poçt ünvanı daxil edin: ");
+        fullName = char.ToUpper(fullName[0]) + fullName.Substring(1);
+
+        var existingUser = await userService.GetUserByFullNameAsync(fullName);
+        if (existingUser != null)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Bu adla istifadeci artıq mövcuddur.");
+            Console.ResetColor();
+            goto FirstName;
+        }
+
+        Console.ForegroundColor = ConsoleColor.Cyan;
+    FirstEmail:
+        Console.Write("E-poct ünvanı daxil edin: ");
         var email = Console.ReadLine();
+        Console.ResetColor();
         if (string.IsNullOrWhiteSpace(email) || !email.Contains("@") || !email.Contains("."))
         {
-            Console.WriteLine("Yanlış e-poçt ünvanı.");
-            return;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Yanlış e-poct ünvanı,e-poct ünvanı boş ola bilmez ve @ işaresi olmalıdır");
+            Console.ResetColor();
+            goto FirstEmail;
         }
 
+        Console.ForegroundColor = ConsoleColor.Cyan;
+    FirstPassword:
         Console.Write("Şifre daxil edin: ");
         var password = Console.ReadLine();
+        Console.ResetColor();
         if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Şifre en azı 6 simvoldan ibaret olmalıdır.");
-            return;
+            Console.ResetColor();
+            goto FirstPassword;
         }
 
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        FirstMap:
         Console.Write("Ünvan daxil edin: ");
         var address = Console.ReadLine();
+        Console.ResetColor();
         if (string.IsNullOrWhiteSpace(address))
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Ünvan daxil edilmelidir.");
-            return;
+            Console.ResetColor();
+            goto FirstMap;
         }
 
         var registerUserDto = new RegisterUserDto
@@ -110,24 +181,31 @@ static async Task RegisterUser(UserService userService)
         };
 
         await userService.RegisterUserAsync(registerUserDto);
-        Console.WriteLine("İstifadeçi uğurla qeydiyyatdan keçdi.");
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("İstifadeci uğurla qeydiyyatdan kecdi.");
+        Console.ResetColor();
     }
     catch (InvalidUserInformationException ex)
     {
+        Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"Qeydiyyat uğursuz oldu: {ex.Message}");
+        Console.ResetColor();
     }
     catch (Exception ex)
     {
+        Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine($"Xeta baş verdi: {ex.Message}");
+        Console.ResetColor();
     }
 }
+
 
 static async Task<User?> LoginUser(UserService userService)
 {
     try
     {
         Console.WriteLine("Daxil olun:");
-        Console.Write("E-poçt ünvanı daxil edin: ");
+        Console.Write("E-poct ünvanı daxil edin: ");
         var email = Console.ReadLine();
 
         Console.Write("Şifre daxil edin: ");
@@ -155,7 +233,7 @@ static async Task<User?> LoginUser(UserService userService)
     }
 }
 
-static async Task ShowServiceMenu(OrderService orderService, ProductService productService, PaymentService paymentService, OrderDetailServiceL OrderDetailServiceL)
+static async Task ShowServiceMenu(OrderService orderService, ProductService productService, PaymentService paymentService, OrderDetailService orderDetailService,User LogedUser)
 {
     while (true)
     {
@@ -171,7 +249,7 @@ static async Task ShowServiceMenu(OrderService orderService, ProductService prod
         switch (serviceCommand)
         {
             case "1":
-                await ManageOrders(orderService, productService);
+                await ManageOrders(orderService, productService,LogedUser);
                 break;
             case "2":
                 await ManageProducts(productService);
@@ -182,19 +260,19 @@ static async Task ShowServiceMenu(OrderService orderService, ProductService prod
                 Console.WriteLine("Ödenişler servisi.");
                 break;
             case "4":
-               
+                await ManageOrderDetails(orderDetailService, orderService);
                 Console.WriteLine("Sifariş Detalları servisi.");
                 break;
             case "5":
-                return; 
+                return;
             default:
-                Console.WriteLine("Yanlış seçim, yeniden cehd edin.");
+                Console.WriteLine("Yanlış secim, yeniden cehd edin.");
                 break;
         }
     }
 }
 
-static async Task ManageOrders(OrderService orderService,ProductService productService)
+static async Task ManageOrders(OrderService orderService, ProductService productService,User LogedUser)
 {
     while (true)
     {
@@ -204,6 +282,7 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
         Console.WriteLine("3. Sifarişi sil");
         Console.WriteLine("4. Sifarişi tamamla");
         Console.WriteLine("5. Sifarişi leğv et");
+        Console.WriteLine("7.Add OrderDetail");
         Console.WriteLine("6. Geri qayıt");
 
         string orderCommand = Console.ReadLine();
@@ -211,7 +290,7 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
         switch (orderCommand)
         {
             case "1":
-                await CreateOrder(orderService, productService);
+                await CreateOrder(orderService, productService,LogedUser);
                 break;
             case "2":
                 await ListOrders(orderService);
@@ -228,18 +307,17 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
             case "6":
                 return;
             default:
-                Console.WriteLine("Yanlış seçim, yeniden cehd edin.");
+                Console.WriteLine("Yanlış secim, yeniden cehd edin.");
                 break;
         }
     }
 
-    static async Task CreateOrder(OrderService orderService, ProductService productService)
+    static async Task CreateOrder(OrderService orderService, ProductService productService,User LogedUser)
     {
         try
         {
-            Console.WriteLine("Yeni sifariş yaratmaq üçün melumatları daxil edin:");
-            Console.Write("İstifadeçi ID-sini daxil edin: ");
-            int userId = int.Parse(Console.ReadLine());
+            Console.WriteLine("Yeni sifariş yaratmaq ücün melumatları daxil edin:");
+            int userId = LogedUser.Id;
 
             var products = await productService.GetAllProductAsync();
             Console.WriteLine("Mövcud Mehsullar:");
@@ -248,13 +326,13 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
                 Console.WriteLine($"ID: {product.Id}, Ad: {product.Name}, Qiymet: {product.Price}, Stok: {product.Stock}");
             }
 
-            Console.Write("Mehsul ID-sini seçin: ");
+            Console.Write("Mehsul ID-sini secin: ");
             int productId = int.Parse(Console.ReadLine());
 
             var selectedProduct = products.FirstOrDefault(p => p.Id == productId);
             if (selectedProduct == null)
             {
-                throw new NotFoundException("Seçilen mehsul tapılmadı.");
+                throw new NotFoundException("Secilen mehsul tapılmadı.");
             }
 
             Console.Write("Miqdarı daxil edin: ");
@@ -265,15 +343,17 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
                 throw new InvalidOrderException("Stokda kifayet qeder mehsul yoxdur.");
             }
 
-            var order = new Order
+            var order = new OrderDto
             {
                 UserId = userId,
                 Id = productId,
                 TotalAmount = quantity,
-                OrderDate = DateTime.UtcNow
+                OrderDate = DateTime.UtcNow,
+                ProductId=selectedProduct.Id,
+                 Quantity=quantity
             };
 
-            await orderService.CreateOrderAsync(userId);
+            await orderService.CreateOrderAsync(order);
 
             selectedProduct.Stock -= quantity;
             await productService.UpdateProductAsync(selectedProduct);
@@ -282,17 +362,24 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
         }
         catch (InvalidOrderException ex)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Sifariş yaratmaq uğursuz oldu: {ex.Message}");
+            Console.ResetColor();
         }
         catch (NotFoundException ex)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Xeta: {ex.Message}");
+            Console.ResetColor();
         }
         catch (Exception ex)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Xeta baş verdi: {ex.Message}");
+            Console.ResetColor();
         }
     }
+
 
     static async Task ListOrders(OrderService orderService)
     {
@@ -302,7 +389,7 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
             Console.WriteLine("Sifarişler:");
             foreach (var order in orders)
             {
-                Console.WriteLine($"İstifadeçi ID: {order.UserId}, Mebleğ: {order.TotalAmount}, Status: {order.Status}");
+                Console.WriteLine($"İstifadeci ID: {order.UserId}, Mebleğ: {order.TotalAmount}, Status: {order.Status}");
             }
         }
         catch (Exception ex)
@@ -316,7 +403,7 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
         try
         {
 
-            Console.WriteLine("Sifarişi silmek üçün sifariş ID-sini daxil edin:");
+            Console.WriteLine("Sifarişi silmek ücün sifariş ID-sini daxil edin:");
             int orderId = int.Parse(Console.ReadLine());
 
             await orderService.DeleteOrderAsync(orderId);
@@ -335,7 +422,7 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
     {
         try
         {
-            Console.WriteLine("Sifarişi tamamlamaq üçün sifariş ID-sini daxil edin:");
+            Console.WriteLine("Sifarişi tamamlamaq ücün sifariş ID-sini daxil edin:");
             int orderId = int.Parse(Console.ReadLine());
 
             await orderService.CompleteOrderAsync(orderId);
@@ -359,7 +446,7 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
     {
         try
         {
-            Console.WriteLine("Sifarişi leğv etmek üçün sifariş ID-sini daxil edin:");
+            Console.WriteLine("Sifarişi leğv etmek ücün sifariş ID-sini daxil edin:");
             int orderId = int.Parse(Console.ReadLine());
 
             await orderService.CancelOrderAsync(orderId);
@@ -379,7 +466,6 @@ static async Task ManageOrders(OrderService orderService,ProductService productS
         }
     }
 }
-
 static async Task ManageProducts(ProductService productService)
 {
     while (true)
@@ -418,7 +504,7 @@ static async Task ManageProducts(ProductService productService)
             case "7":
                 return;
             default:
-                Console.WriteLine("Yanlış seçim, yeniden cehd edin.");
+                Console.WriteLine("Yanlış secim, yeniden cehd edin.");
                 break;
         }
     }
@@ -426,16 +512,41 @@ static async Task ManageProducts(ProductService productService)
     {
         try
         {
-            Console.WriteLine("Yeni mehsul yaratmaq üçün melumatları daxil edin:");
+            var products = await productService.GetAllProductAsync();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Yeni mehsul yaratmaq ücün melumatları daxil edin:");
+            Console.ResetColor();
+        CreateProductName:
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.Write("Mehsulun adını daxil edin: ");
+            Console.ResetColor();
             string name = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Adsiz mehsul yaratmaq mumkun deil");
+                Console.ResetColor();
+                goto CreateProductName;
+            }
+
+            var productWithSameName = products.FirstOrDefault(p => p.Name == name);
+            if (productWithSameName != null)
+            {
+                throw new Exception("Eyni adla artıq başqa bir mehsul mövcuddur.");
+            }
 
             Console.Write("Mehsulun qiymetini daxil edin: ");
             decimal price = decimal.Parse(Console.ReadLine());
-
+            if (price == 0 && price < 0)
+            {
+                Console.WriteLine("Qiymet 0 ve ya menfi ola bilmez");
+            }
             Console.Write("Mehsulun stok miqdarını daxil edin: ");
             int stock = int.Parse(Console.ReadLine());
-
+            if (stock == 0 && stock < 0)
+            {
+                Console.WriteLine("Stok 0 ve ya menfi ola bilmez");
+            }
             Console.Write("Mehsulun tesvirini daxil edin (boş buraxmaq olar): ");
             string description = Console.ReadLine();
 
@@ -481,12 +592,28 @@ static async Task ManageProducts(ProductService productService)
     {
         try
         {
+            var products = await productService.GetAllProductAsync();
+            foreach (var item in products)
+            {
+                Console.WriteLine($"Product ID: {item.Id}, Product Name: {item.Name}, Product Price {item.Price}, Product Desc: {item.Description}");
+            }
+
             Console.WriteLine("Yenilenecek mehsulun ID-sini daxil edin:");
             int id = int.Parse(Console.ReadLine());
 
+            var existingProduct = products.FirstOrDefault(p => p.Id == id);
+            if (existingProduct == null)
+            {
+                throw new NotFoundException($"ID-si {id} olan mehsul tapılmadı.");
+            }
+
             Console.WriteLine("Mehsulun yeni adını daxil edin:");
             string name = Console.ReadLine();
-
+            var productWithSameName = products.FirstOrDefault(p => p.Name == name);
+            if (productWithSameName != null)
+            {
+                throw new Exception("Eyni adla artıq başqa bir mehsul mövcuddur.");
+            }
             Console.WriteLine("Mehsulun yeni qiymetini daxil edin:");
             decimal price = decimal.Parse(Console.ReadLine());
 
@@ -517,6 +644,7 @@ static async Task ManageProducts(ProductService productService)
             Console.WriteLine($"Xeta baş verdi: {ex.Message}");
         }
     }
+
 
     static async Task DeleteProduct(ProductService productService)
     {
@@ -556,7 +684,7 @@ static async Task ManageProducts(ProductService productService)
             }
             else
             {
-                Console.WriteLine("Heç bir mehsul tapılmadı.");
+                Console.WriteLine("Hec bir mehsul tapılmadı.");
             }
         }
         catch (Exception ex)
@@ -571,7 +699,7 @@ static async Task ManageProducts(ProductService productService)
 
         if (products.Count == 0)
         {
-            Console.WriteLine("Heç bir mehsul tapılmadı.");
+            Console.WriteLine("Hec bir mehsul tapılmadı.");
             return;
         }
 
@@ -619,9 +747,9 @@ static async Task ManagePayments(PaymentService paymentService)
                 await ListPayments(paymentService);
                 break;
             case "3":
-                return; 
+                return;
             default:
-                Console.WriteLine("Yanlış seçim, yeniden cehd edin.");
+                Console.WriteLine("Yanlış secim, yeniden cehd edin.");
                 break;
         }
     }
@@ -631,16 +759,16 @@ static async Task ManagePayments(PaymentService paymentService)
         AppDbContext _context = new AppDbContext();
         try
         {
-            Console.WriteLine("Ödeniş etmek üçün melumatları daxil edin:");
+            Console.WriteLine("Ödeniş etmek ücün melumatları daxil edin:");
             Console.Write("Sifariş ID-sini daxil edin: ");
             int orderId = int.Parse(Console.ReadLine());
 
             Console.Write("Ödeniş mebleğini daxil edin: ");
             decimal amount = decimal.Parse(Console.ReadLine());
 
-            foreach (var item in _context.Products )
+            foreach (var item in _context.Products)
             {
-                if (item.Id==orderId)
+                if (item.Id == orderId)
                 {
                     Console.WriteLine(true);
                 }
@@ -688,5 +816,101 @@ static async Task ManagePayments(PaymentService paymentService)
     }
 
 }
+static async Task ManageOrderDetails(OrderDetailService orderDetailService, OrderService orderService)
+{
+    Console.WriteLine("Sifariş Detalları Menyu:");
+    Console.WriteLine("1. Sifariş Detalı elave Et");
+    Console.WriteLine("2. Sifariş Detallarını Göster");
+    Console.WriteLine("3. Geri dön");
+
+    string choice = Console.ReadLine();
+
+    switch (choice)
+    {
+        case "1":
+            await AddOrderDetail(orderDetailService, orderService);
+            break;
+        case "2":
+            await ShowOrderDetails(orderDetailService);
+            break;
+        case "3":
+            return;
+        default:
+            Console.WriteLine("Yanlış secim, yeniden cehd edin.");
+            break;
+    }
+    static async Task AddOrderDetail(OrderDetailService orderDetailService, OrderService orderService)
+    {
+
+        Console.Write("Sifariş ID daxil edin: ");
+        var orders = await orderService.GetOrders(); 
+
+        Console.WriteLine("Mövcud Sifarişler:");
+        foreach (var order in orders)
+        {
+            Console.WriteLine($"Sifariş ID: {order.Id}, Sifariş Tarixi: {order.OrderDate}, Status: {order.Status}");
+        }
+
+        int orderId = int.Parse(Console.ReadLine());
+
+        Console.Write("Mehsul ID daxil edin: ");
+        int productId = int.Parse(Console.ReadLine());
+
+        Console.Write("Miqdarı daxil edin: ");
+        int quantity = int.Parse(Console.ReadLine());
+
+        Console.Write("Mehsulun birim qiymetini daxil edin: ");
+        decimal pricePerItem = decimal.Parse(Console.ReadLine());
+
+        var orderDetailDto = new OrderDetailDto
+        {
+            OrderId = orderId,
+            ProductId = productId,
+            Quantity = quantity,
+            PricePerItem = pricePerItem
+        };
+
+        try
+        {
+            await orderDetailService.AddOrderDetailAsync(orderDetailDto);
+            Console.WriteLine("Sifariş detalı uğurla elave olundu.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Xeta: {ex.Message}");
+        }
+    }
+
+    static async Task ShowOrderDetails(OrderDetailService orderDetailService)
+    {
+        Console.Write("Sifariş ID daxil edin: ");
+        int orderId = int.Parse(Console.ReadLine());
+
+        try
+        {
+            var orderDetails = await orderDetailService.GetOrderDetailsByOrderIdAsync(orderId);
+            if (orderDetails.Count == 0)
+            {
+                Console.WriteLine("Bu sifarişe aid hec bir detal tapılmadı.");
+            }
+            else
+            {
+                foreach (var detail in orderDetails)
+                {
+                    Console.WriteLine($"Mehsul ID: {detail.ProductId}, Miqdar: {detail.Quantity}, Birim Qiymet: {detail.PricePerItem}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Xeta: {ex.Message}");
+        }
+    }
+}
+
+
+
+
+
 
 

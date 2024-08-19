@@ -8,6 +8,7 @@ public class Order : BaseEntity
     public DateTime OrderDate { get; set; } 
     public decimal TotalAmount { get; set; } 
     public OrderStatus Status { get; set; }
+    public List<OrderDetail> OrderDetails { get; set; } = new();
     public enum OrderStatus
     {
         Pending,

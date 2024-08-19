@@ -7,11 +7,11 @@ using ORM_Mini_Project.Services.Interfaces;
 
 namespace ORM_Mini_Project.Services.Implementations
 {
-    public class OrderDetailServiceL : IOrderDetailService
+    public class OrderDetailService : IOrderDetailService
     {
         private readonly AppDbContext _context;
        
-        public OrderDetailServiceL()
+        public OrderDetailService()
         {
             _context = new AppDbContext();
         }

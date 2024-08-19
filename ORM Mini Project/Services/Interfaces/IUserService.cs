@@ -9,5 +9,5 @@ public interface IUserService
     Task<User> LoginUserAsync(LoginUserDto loginUserDto);
     Task UpdateUserAsync(UpdateUserDto updateUserDto);
     Task<List<Order>> GetUserOrders(int id);
-
+    Task<User> GetUserByFullNameAsync(string fullName);
 }

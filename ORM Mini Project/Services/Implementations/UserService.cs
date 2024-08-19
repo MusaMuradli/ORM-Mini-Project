@@ -15,7 +15,7 @@ namespace ORM_Mini_Project.Services.Implementations
             _context = new AppDbContext();
         }
 
-       
+
 
         public async Task RegisterUserAsync(RegisterUserDto registerUserDto)
         {
@@ -67,7 +67,7 @@ namespace ORM_Mini_Project.Services.Implementations
 
             return user.Orders;
         }
-        
+
         public async Task UpdateUserAsync(UpdateUserDto updateUserDto)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == updateUserDto.Id);
@@ -85,6 +85,10 @@ namespace ORM_Mini_Project.Services.Implementations
         internal Task GetUserByEmailAsync(string email)
         {
             throw new NotImplementedException();
+        }
+        public async Task<User> GetUserByFullNameAsync(string fullName)
+        {
+            return await _context.Users.FirstOrDefaultAsync(x => x.FullName == fullName);
         }
     }
 }

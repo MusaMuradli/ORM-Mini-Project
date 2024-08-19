@@ -202,17 +202,21 @@ namespace ORM_Mini_Project.Migrations
 
             modelBuilder.Entity("ORM_Mini_Project.Models.OrderDetail", b =>
                 {
-                    b.HasOne("ORM_Mini_Project.Models.Order", null)
-                        .WithMany()
+                    b.HasOne("ORM_Mini_Project.Models.Order", "Order")
+                        .WithMany("OrderDetails")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ORM_Mini_Project.Models.Product", null)
+                    b.HasOne("ORM_Mini_Project.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ORM_Mini_Project.Models.Payment", b =>
@@ -224,6 +228,11 @@ namespace ORM_Mini_Project.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("ORM_Mini_Project.Models.Order", b =>
+                {
+                    b.Navigation("OrderDetails");
                 });
 
             modelBuilder.Entity("ORM_Mini_Project.Models.User", b =>
